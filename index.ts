@@ -17,5 +17,5 @@ mongoose.connect(app_config.mongo_uri!).then(() => {
   console.log('MongoDB connected');
   app.listen(port, () => console.log(`Server running on port ${port}`));
   scheduleBirthday();
-  
-}).catch(err => console.error('MongoDB connection error:', err));
+
+}).catch((err: any) => console.error('MongoDB connection error:', err));

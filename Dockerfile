@@ -8,7 +8,8 @@ COPY package*.json ./
 RUN npm install
 
 # Install ts-node globally (optional, for dev/debug)
-RUN npm install -g ts-node typescript
+RUN npm install -g ts-node-dev
+RUN npm install --save-dev @types/express @types/body-parser @types/mongoose
 
 # Copy your app
 COPY . .
