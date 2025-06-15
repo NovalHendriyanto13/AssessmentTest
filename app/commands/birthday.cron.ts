@@ -9,9 +9,9 @@ export function scheduleBirthday() {
     const users = await UserModel.find();
 
     for (const user of users) {
-    //   if (!isBirthdayToday(user.birthday, user.timezone)) continue;
-    //   if (!isNineAM(user.timezone)) continue;
-    //   if (user.lastSentYear === new Date().getFullYear()) continue;
+      if (!isBirthdayToday(user.birthday, user.timezone)) continue;
+      if (!isNineAM(user.timezone)) continue;
+      if (user.lastSentYear === new Date().getFullYear()) continue;
 
       const emailBody = `Hi ${user.firstName} ${user.lastName}, Happy Birthday to You`;
       const sent = await sendEmail(emailBody, user.email);
