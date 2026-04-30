@@ -25,6 +25,11 @@ A modern, scalable Laravel 13 development environment using Docker with PHP 8.3,
 
 ---
 
+## 🛠 Requirements
+Docker
+Docker Compose
+Make (optional but recommended)
+
 ## 🧱 System Architecture
 
 This project uses a container-based architecture:
@@ -81,3 +86,43 @@ make sh
 php artisan migrate
 exit
 ```
+## Application
+
+http://localhost:8000
+
+## 🧪 Features Included
+✔ Laravel 13 ready
+✔ Dockerized environment
+✔ Redis cache & queue support
+✔ Background job processing
+✔ Scheduler automation
+✔ MySQL integration
+✔ Makefile automation
+✔ Clean architecture separation
+
+## 🧠 Architecture Philosophy
+
+This setup follows:
+
+Single responsibility containers
+Stateless application design
+Scalable queue workers
+Service isolation
+Developer productivity focus
+
+## 💬 Support
+
+For issues or improvements, open a pull request or issue.
+
+---
+
+# 🔥 If you want next upgrade
+
+I can also generate:
+
+- ⚡ full `Makefile`
+- ⚡ production Docker (Nginx + PHP-FPM + Redis + Supervisor)
+- ⚡ Laravel Horizon setup
+- ⚡ CI/CD GitHub Actions pipeline
+
+Just say 👍
