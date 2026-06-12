@@ -1,0 +1,260 @@
+openapi: 3.0.3
+info:
+  title: SIEM Backend API
+  description: Mini SIEM Dashboard backend integrating PostgreSQL and Elasticsearch
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+
+tags:
+  - name: Alerts
+    description: Security alert log filtering
+  - name: Dashboard
+    description: Aggregated dashboard data
+  - name: Highlighted IPs
+    description: Suspicious IP management and monitoring
+  - name: Health
+    description: Service health checks
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: One or more services degraded
+
+  /alerts:
+    get:
+      tags: [Alerts]
+      summary: Filter security alerts (Task 1)
+      parameters:
+        - in: query
+          name: department
+          schema: { type: string }
+          description: Filter by department owner (e.g. Finance)
+        - in: query
+          name: risk
+          schema: { type: string, enum: [low, medium, high, critical] }
+          description: Filter by asset risk level
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20, maximum: 100 }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [asc, desc], default: desc }
+      responses:
+        "200":
+          description: List of alert logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertListResponse"
+
+  /dashboard/top-targeted:
+    get:
+      tags: [Dashboard]
+      summary: Top 5 most targeted assets (Task 2)
+      responses:
+        "200":
+          description: Top targeted assets enriched with asset info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopTargetedResponse"
+
+  /highlighted-ips:
+    get:
+      tags: [Highlighted IPs]
+      summary: List all highlighted IPs
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: List of highlighted IPs
+
+    post:
+      tags: [Highlighted IPs]
+      summary: Add a highlighted IP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HighlightedIpInput"
+      responses:
+        "201":
+          description: Created
+        "409":
+          description: IP already exists
+
+  /highlighted-ips/{id}:
+    get:
+      tags: [Highlighted IPs]
+      summary: Get a highlighted IP by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Found
+        "404":
+          description: Not found
+
+    put:
+      tags: [Highlighted IPs]
+      summary: Replace a highlighted IP record
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HighlightedIpInput"
+      responses:
+        "200":
+          description: Updated
+        "404":
+          description: Not found
+
+    patch:
+      tags: [Highlighted IPs]
+      summary: Partially update a highlighted IP record
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HighlightedIpPatch"
+      responses:
+        "200":
+          description: Updated
+
+    delete:
+      tags: [Highlighted IPs]
+      summary: Delete a highlighted IP
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /highlighted-ips/activity/logs:
+    get:
+      tags: [Highlighted IPs]
+      summary: Alert logs from highlighted IPs (Task 3C)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [asc, desc] }
+      responses:
+        "200":
+          description: Alert activity from highlighted IPs
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded]
+        services:
+          type: object
+          properties:
+            postgres: { type: string, enum: [up, down] }
+            elasticsearch: { type: string, enum: [up, down] }
+
+    AlertListResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        meta:
+          type: object
+          properties:
+            total_data: { type: integer }
+            page: { type: integer }
+            limit: { type: integer }
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp: { type: string, format: date-time }
+              source_ip: { type: string }
+              target_ip: { type: string }
+              alert_name: { type: string }
+              severity: { type: integer }
+
+    TopTargetedResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        meta:
+          type: object
+          properties:
+            total_data: { type: integer }
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              target_ip: { type: string }
+              total_attacks: { type: integer }
+              asset_name: { type: string, nullable: true }
+              department: { type: string, nullable: true }
+
+    HighlightedIpInput:
+      type: object
+      required: [ip_address]
+      properties:
+        ip_address: { type: string, format: ipv4 }
+        label: { type: string }
+        reason: { type: string }
+
+    HighlightedIpPatch:
+      type: object
+      properties:
+        ip_address: { type: string, format: ipv4 }
+        label: { type: string }
+        reason: { type: string }

@@ -1,0 +1,84 @@
+services:
+  # 1. Database Relasional (RDBMS)
+  rdbms:
+    image: postgres:15-alpine
+    container_name: test-rdbms
+    environment:
+      POSTGRES_USER: backend_user
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: siem_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - siem-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backend_user -d siem_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 2. Elasticsearch (ES)
+  elasticsearch:
+    image: elasticsearch:8.8.2
+    container_name: test-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./init-es/setup-es.sh:/setup-es.sh
+    ports:
+      - "9200:9200"
+    networks:
+      - siem-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # 3. Otomasi Inject Data Ke ES
+  es-initializer:
+    image: curlimages/curl:latest
+    container_name: test-es-initializer
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./init-es:/scripts
+    entrypoint: ["sh", "/scripts/setup-es.sh"]
+    networks:
+      - siem-network
+
+  # 4. SIEM Backend API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: test-api
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      POSTGRES_HOST: rdbms
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: backend_user
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: siem_db
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      rdbms:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - siem-network
+
+networks:
+  siem-network:
+    driver: bridge
