@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel5-app
+    ports:
+      - "8000:8000"
+    platform: linux/amd64
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
