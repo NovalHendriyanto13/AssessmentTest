@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     git curl zip unzip \
     libpng-dev libonig-dev libxml2-dev libicu-dev libzip-dev \
     libjpeg62-turbo-dev libfreetype6-dev \
-    ca-certificates \
+    ca-certificates nodejs npm\
     && update-ca-certificates \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl xml zip \
@@ -32,6 +32,15 @@ RUN COMPOSER_MEMORY_LIMIT=-1 composer create-project laravel/laravel . "5.8.*" \
 # Permissions for storage & cache
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+RUN COMPOSER_MEMORY_LIMIT=-1 composer install \
+    --no-interaction \
+    --no-plugins \
+    --no-scripts \
+    --no-dev \
+    --ignore-platform-reqs
+
+RUN npm install --no-audit --no-fund
 
 EXPOSE 8000
 

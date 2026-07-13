@@ -25,10 +25,9 @@ class MovieController extends ApiBaseController
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, HTTP_CODE);
         curl_close($ch);
 
-        if ($httpCode !== 200 || !$response) {
+        if (!$response) {
             return [
                 'Response' => 'False',
                 'Error' => 'Failed to connect to OMDb API'
